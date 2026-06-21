@@ -847,3 +847,7 @@ else:
                     
         else:
             st.info("💡 Please simulate an incident in the **Congestion Risk Forecaster** tab first to generate routing and diversion suggestions.")
+
+# Dummy WSGI app variable to suppress Vercel deployment error
+# NOTE: Streamlit requires a persistent server and cannot run natively on Vercel's serverless functions.
+app = None

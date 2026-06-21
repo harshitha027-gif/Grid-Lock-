@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Astram — AI Traffic Congestion Management Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #020817;
+      --bg2:       #0f172a;
+      --bg3:       #1e293b;
+      --border:    #334155;
+      --text:      #f8fafc;
+      --muted:     #94a3b8;
+      --blue:      #3b82f6;
+      --green:     #10b981;
+      --purple:    #8b5cf6;
+      --orange:    #f97316;
+      --red:       #ef4444;
+      --yellow:    #eab308;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2.5rem;
+      background: rgba(2, 8, 23, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(51,65,85,0.4);
+      transition: all .3s;
+    }
+    nav.scrolled { padding: .75rem 2.5rem; }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: .6rem;
+      font-size: 1.4rem; font-weight: 700; letter-spacing: -.02em;
+      text-decoration: none; color: var(--text);
+    }
+    .logo-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.4); opacity: .7; }
+    }
+
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: .9rem; font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: var(--blue); color: #fff; border: none; padding: .55rem 1.3rem;
+      border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: .9rem;
+      font-weight: 600; cursor: pointer; transition: all .2s;
+      text-decoration: none;
+    }
+    .nav-cta:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(59,130,246,.4); }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 6rem 1.5rem 4rem;
+      position: relative; overflow: hidden;
+    }
+
+    /* animated grid bg */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,.06) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: grid-move 20s linear infinite;
+    }
+    @keyframes grid-move { from { transform: translateY(0); } to { transform: translateY(60px); } }
+
+    /* radial glow */
+    .hero::after {
+      content: '';
+      position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 400px;
+      background: radial-gradient(ellipse, rgba(59,130,246,.18) 0%, rgba(139,92,246,.1) 40%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.3);
+      color: var(--blue); padding: .35rem 1rem; border-radius: 999px;
+      font-size: .8rem; font-weight: 600; letter-spacing: .05em;
+      margin-bottom: 1.8rem; position: relative; z-index: 1;
+      animation: fade-down .6s ease both;
+    }
+    .badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); animation: pulse-dot 1.5s infinite;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 800; line-height: 1.1; letter-spacing: -.03em;
+      position: relative; z-index: 1;
+      animation: fade-up .8s ease .1s both;
+    }
+    .grad-text {
+      background: linear-gradient(135deg, var(--blue) 0%, var(--green) 50%, var(--purple) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      max-width: 640px; margin: 1.5rem auto 0;
+      color: var(--muted); font-size: 1.15rem; line-height: 1.65;
+      position: relative; z-index: 1;
+      animation: fade-up .8s ease .2s both;
+    }
+
+    .hero-actions {
+      display: flex; gap: 1rem; margin-top: 2.5rem;
+      position: relative; z-index: 1; flex-wrap: wrap; justify-content: center;
+      animation: fade-up .8s ease .35s both;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: var(--blue); color: #fff;
+      padding: .8rem 2rem; border-radius: 10px;
+      font-family: 'Outfit',sans-serif; font-size: 1rem; font-weight: 600;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: all .25s; position: relative; overflow: hidden;
+    }
+    .btn-primary::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+      opacity: 0; transition: opacity .25s;
+    }
+    .btn-primary:hover::before { opacity: 1; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59,130,246,.5); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: transparent; color: var(--text);
+      padding: .8rem 2rem; border-radius: 10px;
+      font-family: 'Outfit',sans-serif; font-size: 1rem; font-weight: 600;
+      border: 1px solid var(--border); cursor: pointer; text-decoration: none;
+      transition: all .25s;
+    }
+    .btn-secondary:hover { background: var(--bg3); border-color: var(--blue); transform: translateY(-2px); }
+
+    /* hero stats strip */
+    .hero-stats {
+      display: flex; gap: 3rem; margin-top: 4rem; flex-wrap: wrap; justify-content: center;
+      position: relative; z-index: 1;
+      animation: fade-up .8s ease .5s both;
+    }
+    .hero-stat { text-align: center; }
+    .hero-stat-val {
+      font-size: 2rem; font-weight: 700; color: var(--text);
+      background: linear-gradient(135deg, var(--blue), var(--green));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-stat-lbl { color: var(--muted); font-size: .8rem; margin-top: .2rem; text-transform: uppercase; letter-spacing: .07em; }
+
+    /* scroll indicator */
+    .scroll-hint {
+      position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: .4rem;
+      color: var(--muted); font-size: .75rem;
+      animation: fade-in 1s ease 1.2s both;
+      z-index: 1;
+    }
+    .scroll-arrow {
+      width: 24px; height: 24px; border-right: 2px solid var(--muted);
+      border-bottom: 2px solid var(--muted); transform: rotate(45deg);
+      animation: bounce-down 1.5s infinite;
+    }
+    @keyframes bounce-down {
+      0%,100% { transform: rotate(45deg) translateY(0); }
+      50%      { transform: rotate(45deg) translateY(5px); }
+    }
+
+    /* ─── SECTION BASE ─── */
+    section { padding: 6rem 1.5rem; }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    .section-tag {
+      display: inline-block;
+      background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.25);
+      color: var(--green); padding: .3rem .85rem; border-radius: 999px;
+      font-size: .75rem; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; margin-bottom: 1.2rem;
+    }
+    .section-tag.purple {
+      background: rgba(139,92,246,.1); border-color: rgba(139,92,246,.25); color: var(--purple);
+    }
+    .section-tag.orange {
+      background: rgba(249,115,22,.1); border-color: rgba(249,115,22,.25); color: var(--orange);
+    }
+    .section-tag.blue {
+      background: rgba(59,130,246,.1); border-color: rgba(59,130,246,.25); color: var(--blue);
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700;
+      letter-spacing: -.02em; line-height: 1.2; margin-bottom: .8rem;
+    }
+    .section-sub { color: var(--muted); font-size: 1.05rem; line-height: 1.6; max-width: 560px; }
+
+    /* ─── PROBLEM SECTION ─── */
+    #problem { background: var(--bg2); }
+    .problem-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .problem-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.8rem;
+      transition: all .3s; position: relative; overflow: hidden;
+      opacity: 0; transform: translateY(30px);
+    }
+    .problem-card.visible { animation: card-in .5s ease forwards; }
+    @keyframes card-in {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .problem-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(59,130,246,.05), transparent);
+      opacity: 0; transition: opacity .3s;
+    }
+    .problem-card:hover::before { opacity: 1; }
+    .problem-card:hover { border-color: rgba(59,130,246,.4); transform: translateY(-4px); }
+
+    .problem-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 1rem;
+    }
+    .problem-card h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: .5rem; }
+    .problem-card p { color: var(--muted); font-size: .9rem; line-height: 1.6; }
+
+    /* ─── FEATURES ─── */
+    #features { background: var(--bg); }
+    .features-header { text-align: center; margin-bottom: 4rem; }
+    .features-header .section-sub { margin: 0 auto; }
+
+    .features-tabs {
+      display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+    .tab-btn {
+      padding: .55rem 1.3rem; border-radius: 999px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-family: 'Outfit',sans-serif; font-size: .9rem;
+      font-weight: 500; cursor: pointer; transition: all .2s;
+    }
+    .tab-btn.active, .tab-btn:hover {
+      background: var(--blue); border-color: var(--blue); color: #fff;
+    }
+
+    .feature-panel { display: none; }
+    .feature-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+
+    .feature-visual {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2rem; aspect-ratio: 4/3;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .feature-visual .chart-mock {
+      width: 100%; height: 100%;
+      display: flex; align-items: flex-end; gap: 8px; padding: 1rem;
+    }
+    .bar {
+      flex: 1; border-radius: 6px 6px 0 0;
+      animation: bar-rise 1s ease both;
+    }
+    @keyframes bar-rise { from { height: 0 !important; } }
+
+    .map-mock {
+      width: 100%; height: 100%; position: relative;
+      background: radial-gradient(circle at 30% 60%, rgba(59,130,246,.15), transparent 60%),
+                  radial-gradient(circle at 70% 30%, rgba(16,185,129,.12), transparent 50%);
+    }
+    .map-dot {
+      position: absolute; border-radius: 50%;
+      animation: ping 2s cubic-bezier(0,0,.2,1) infinite;
+    }
+    @keyframes ping {
+      0%   { transform: scale(1); opacity: 1; }
+      75%,100% { transform: scale(2.5); opacity: 0; }
+    }
+
+    .feature-content h3 { font-size: 1.6rem; font-weight: 700; margin-bottom: 1rem; }
+    .feature-content p { color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem; }
+
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: .75rem; }
+    .feature-list li {
+      display: flex; align-items: flex-start; gap: .75rem;
+      color: var(--muted); font-size: .95rem;
+    }
+    .check {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.4);
+      color: var(--green); display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; flex-shrink: 0; margin-top: .1rem;
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    #how { background: var(--bg2); }
+    .how-header { text-align: center; margin-bottom: 4rem; }
+
+    .steps {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0; position: relative;
+    }
+    .steps::before {
+      content: ''; position: absolute; top: 2.2rem; left: 10%; right: 10%; height: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--green), var(--purple));
+      opacity: .3;
+    }
+
+    .step {
+      text-align: center; padding: 2rem 1.5rem;
+      opacity: 0; transform: translateY(20px);
+    }
+    .step.visible { animation: card-in .5s ease forwards; }
+
+    .step-num {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1rem; margin: 0 auto 1.2rem;
+      position: relative; z-index: 1;
+    }
+    .step h4 { font-size: 1rem; font-weight: 600; margin-bottom: .5rem; }
+    .step p { color: var(--muted); font-size: .88rem; line-height: 1.6; }
+
+    /* ─── METRICS ─── */
+    #metrics { background: var(--bg); }
+    .metrics-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .metric-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem;
+      text-align: center; transition: all .3s;
+      opacity: 0; transform: translateY(20px);
+    }
+    .metric-card.visible { animation: card-in .5s ease forwards; }
+    .metric-card:hover { border-color: var(--blue); transform: translateY(-4px); }
+    .metric-val {
+      font-size: 2.5rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--blue), var(--green));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .metric-lbl { color: var(--muted); font-size: .85rem; margin-top: .5rem; }
+    .metric-delta {
+      display: inline-block; margin-top: .75rem;
+      background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3);
+      color: var(--green); padding: .2rem .6rem; border-radius: 6px;
+      font-size: .75rem; font-weight: 600;
+    }
+
+    /* ─── RISK DEMO ─── */
+    #demo { background: var(--bg2); }
+    .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; margin-top: 3rem; }
+
+    .risk-levels { display: flex; flex-direction: column; gap: 1rem; }
+    .risk-row {
+      display: flex; align-items: center; gap: 1rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1rem 1.2rem;
+      cursor: pointer; transition: all .25s;
+    }
+    .risk-row:hover { border-color: currentColor; transform: translateX(4px); }
+    .risk-row.critical { color: #ef4444; }
+    .risk-row.high     { color: #f97316; }
+    .risk-row.medium   { color: #eab308; }
+    .risk-row.low      { color: #10b981; }
+
+    .risk-indicator { width: 12px; height: 12px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .risk-label { font-weight: 600; font-size: .95rem; flex: 1; color: currentColor; }
+    .risk-bar-wrap { flex: 2; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+    .risk-fill { height: 100%; border-radius: 3px; background: currentColor; transition: width 1s ease; }
+
+    .risk-detail {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2rem;
+    }
+    .risk-detail h4 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; }
+    .factor-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: .6rem 0; border-bottom: 1px solid rgba(51,65,85,.4);
+      font-size: .9rem;
+    }
+    .factor-row:last-child { border-bottom: none; }
+    .factor-name { color: var(--muted); }
+    .factor-score { font-weight: 600; }
+
+    /* ─── CTA ─── */
+    #cta {
+      background: var(--bg);
+      text-align: center; padding: 8rem 1.5rem;
+      position: relative; overflow: hidden;
+    }
+    #cta::before {
+      content: '';
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 900px; height: 500px;
+      background: radial-gradient(ellipse, rgba(59,130,246,.12), rgba(139,92,246,.07) 40%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-inner { position: relative; z-index: 1; }
+    .cta-inner h2 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -.03em; margin-bottom: 1rem; }
+    .cta-inner p { color: var(--muted); font-size: 1.1rem; margin-bottom: 2.5rem; }
+
+    .btn-glow {
+      display: inline-flex; align-items: center; gap: .6rem;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: #fff; padding: 1rem 2.5rem; border-radius: 12px;
+      font-family: 'Outfit',sans-serif; font-size: 1.1rem; font-weight: 700;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: all .3s; position: relative; overflow: hidden;
+      box-shadow: 0 0 0 rgba(59,130,246,0);
+    }
+    .btn-glow::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+      opacity: 0; transition: opacity .3s;
+    }
+    .btn-glow:hover::after { opacity: 1; }
+    .btn-glow:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 40px rgba(59,130,246,.5), 0 0 80px rgba(139,92,246,.25);
+    }
+    .btn-glow:active { transform: translateY(0); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--bg2); border-top: 1px solid var(--border);
+      padding: 2rem 1.5rem; text-align: center;
+      color: var(--muted); font-size: .85rem;
+    }
+    footer span { color: var(--blue); }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fade-up   { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform: translateY(0); } }
+    @keyframes fade-down { from { opacity:0; transform: translateY(-16px); } to { opacity:1; transform: translateY(0); } }
+    @keyframes fade-in   { from { opacity:0; } to { opacity:1; } }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      nav { padding: 1rem; }
+      .nav-links { display: none; }
+      .feature-panel.active { grid-template-columns: 1fr; }
+      .demo-grid { grid-template-columns: 1fr; }
+      .steps::before { display: none; }
+      .hero-stats { gap: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── NAV ─── -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">
+    <div class="logo-dot"></div>
+    ASTRAM
+  </a>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#metrics">Metrics</a></li>
+    <li><a href="#demo">Demo</a></li>
+  </ul>
+  <a href="#cta" class="nav-cta">Launch Dashboard →</a>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section class="hero" id="home">
+  <div class="hero-badge">
+    <span class="badge-dot"></span>
+    AI-Powered · Real-Time · Bengaluru Traffic Intelligence
+  </div>
+
+  <h1>
+    Stop Congestion<br />
+    <span class="grad-text">Before It Starts</span>
+  </h1>
+
+  <p class="hero-sub">
+    Astram uses machine learning to forecast event-driven traffic breakdowns,
+    deploy the right resources, and generate intelligent diversion plans —
+    before gridlock hits the city.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#cta" class="btn-primary">
+      🚦 Open Live Dashboard
+    </a>
+    <a href="#features" class="btn-secondary">
+      Explore Features ↓
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-val" data-target="93.4">0</div>
+      <div class="hero-stat-lbl">Model Accuracy %</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val" data-target="8174">0</div>
+      <div class="hero-stat-lbl">Traffic Events Analyzed</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val" data-target="4">0</div>
+      <div class="hero-stat-lbl">Risk Levels Classified</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val" data-target="7">0</div>
+      <div class="hero-stat-lbl">Major Hotspots Mapped</div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ─── PROBLEM ─── -->
+<section id="problem">
+  <div class="container">
+    <div class="section-tag">The Problem</div>
+    <h2 class="section-title">Event-Driven Congestion Is<br />Hard to Predict. Harder to Manage.</h2>
+    <p class="section-sub">Political rallies, festivals, sports events, and sudden gatherings create localized traffic breakdowns that today's systems cannot anticipate.</p>
+
+    <div class="problem-grid">
+      <div class="problem-card" style="--delay:.0s">
+        <div class="problem-icon" style="background:rgba(239,68,68,.12);">🚨</div>
+        <h3>No Advance Quantification</h3>
+        <p>Event impact is never measured before deployment. Police rely on experience, not data — leading to under- or over-deployment of resources.</p>
+      </div>
+      <div class="problem-card" style="--delay:.1s">
+        <div class="problem-icon" style="background:rgba(249,115,22,.12);">📊</div>
+        <h3>Experience-Driven Decisions</h3>
+        <p>Resource deployment depends on individual officer knowledge. No standardized framework exists for barricade counts, personnel needs, or diversion routes.</p>
+      </div>
+      <div class="problem-card" style="--delay:.2s">
+        <div class="problem-icon" style="background:rgba(234,179,8,.12);">🔁</div>
+        <h3>Zero Post-Event Learning</h3>
+        <p>After each incident resolves, nothing is captured. The system resets — the same mistakes happen at the next rally, flood, or road closure.</p>
+      </div>
+      <div class="problem-card" style="--delay:.3s">
+        <div class="problem-icon" style="background:rgba(139,92,246,.12);">📍</div>
+        <h3>No Spatial Intelligence</h3>
+        <p>Which junctions are highest risk? Which zones overflow first? Without geospatial density analysis, traffic command is flying blind.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FEATURES ─── -->
+<section id="features">
+  <div class="container">
+    <div class="features-header">
+      <div class="section-tag blue">Platform Features</div>
+      <h2 class="section-title">Four Modules. One Unified Command.</h2>
+      <p class="section-sub">From real-time hotspot visualization to AI-generated diversion plans — everything a traffic command center needs.</p>
+    </div>
+
+    <div class="features-tabs">
+      <button class="tab-btn active" onclick="switchTab(0)">📊 Analytics</button>
+      <button class="tab-btn" onclick="switchTab(1)">🔮 Risk Forecaster</button>
+      <button class="tab-btn" onclick="switchTab(2)">👮 Resource Planner</button>
+      <button class="tab-btn" onclick="switchTab(3)">🔀 Diversion Engine</button>
+    </div>
+
+    <!-- Tab 0: Analytics -->
+    <div class="feature-panel active" id="panel-0">
+      <div class="feature-visual">
+        <div class="chart-mock" id="bar-chart">
+          <div class="bar" style="height:40%;background:rgba(59,130,246,.6);animation-delay:.0s"></div>
+          <div class="bar" style="height:65%;background:rgba(59,130,246,.7);animation-delay:.1s"></div>
+          <div class="bar" style="height:45%;background:rgba(59,130,246,.6);animation-delay:.2s"></div>
+          <div class="bar" style="height:80%;background:rgba(59,130,246,.8);animation-delay:.3s"></div>
+          <div class="bar" style="height:55%;background:rgba(59,130,246,.7);animation-delay:.4s"></div>
+          <div class="bar" style="height:90%;background:rgba(59,130,246,.9);animation-delay:.5s"></div>
+          <div class="bar" style="height:70%;background:rgba(59,130,246,.8);animation-delay:.6s"></div>
+          <div class="bar" style="height:35%;background:rgba(59,130,246,.5);animation-delay:.7s"></div>
+          <div class="bar" style="height:60%;background:rgba(59,130,246,.7);animation-delay:.8s"></div>
+          <div class="bar" style="height:75%;background:rgba(59,130,246,.8);animation-delay:.9s"></div>
+          <div class="bar" style="height:85%;background:rgba(16,185,129,.8);animation-delay:1s"></div>
+          <div class="bar" style="height:50%;background:rgba(59,130,246,.6);animation-delay:1.1s"></div>
+        </div>
+      </div>
+      <div class="feature-content">
+        <h3>Live Event Analytics Dashboard</h3>
+        <p>Monitor traffic incidents across Bengaluru in real-time. Interactive maps, heatmaps, and temporal trend charts give command centers instant situational awareness.</p>
+        <ul class="feature-list">
+          <li><span class="check">✓</span> Geospatial hotspot map with risk-colored incident markers</li>
+          <li><span class="check">✓</span> Congestion heatmap overlay using Folium + HeatMap</li>
+          <li><span class="check">✓</span> Hourly & weekly incident pattern breakdowns</li>
+          <li><span class="check">✓</span> Zone-wise vulnerability ranking across Bengaluru</li>
+          <li><span class="check">✓</span> Filter by event type, cause, priority, and zone</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tab 1: Risk Forecaster -->
+    <div class="feature-panel" id="panel-1">
+      <div class="feature-visual">
+        <div style="width:100%;display:flex;flex-direction:column;gap:1rem;padding:1rem;">
+          <div style="height:12px;background:var(--bg3);border-radius:6px;overflow:hidden">
+            <div style="height:100%;width:85%;background:linear-gradient(90deg,#ef4444,#f97316);border-radius:6px;animation:bar-rise 1s ease"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:.8rem"><span>Risk Score</span><span style="color:#f97316;font-weight:700">78 / 100 — HIGH</span></div>
+          <div style="background:var(--bg3);border-radius:12px;padding:1rem;margin-top:.5rem">
+            <div style="font-size:.75rem;color:var(--muted);margin-bottom:.75rem">FACTOR BREAKDOWN</div>
+            <div style="display:flex;flex-direction:column;gap:.5rem">
+              <div style="display:flex;justify-content:space-between;font-size:.82rem"><span style="color:var(--muted)">Road Closure (25%)</span><span style="color:#ef4444;font-weight:600">25.0</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:.82rem"><span style="color:var(--muted)">Priority (20%)</span><span style="color:#f97316;font-weight:600">20.0</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:.82rem"><span style="color:var(--muted)">Event Cause (20%)</span><span style="color:#eab308;font-weight:600">17.0</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:.82rem"><span style="color:var(--muted)">Duration (20%)</span><span style="color:#3b82f6;font-weight:600">12.5</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:.82rem"><span style="color:var(--muted)">Area Density (15%)</span><span style="color:#8b5cf6;font-weight:600">3.5</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="feature-content">
+        <h3>AI Congestion Risk Forecaster</h3>
+        <p>Input any planned or unplanned event — the platform outputs a real-time risk score from 0–100 and a forecasted disruption duration using trained Random Forest models.</p>
+        <ul class="feature-list">
+          <li><span class="check">✓</span> Multi-factor weighted risk score (road closure, priority, cause, duration, density)</li>
+          <li><span class="check">✓</span> ML classifier: Low / Medium / High / Critical risk levels</li>
+          <li><span class="check">✓</span> Duration regression forecast in minutes</li>
+          <li><span class="check">✓</span> Visual factor decomposition radar chart</li>
+          <li><span class="check">✓</span> Location presets for Bengaluru's top 6 bottlenecks</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tab 2: Resource Planner -->
+    <div class="feature-panel" id="panel-2">
+      <div class="feature-visual">
+        <div style="width:100%;padding:1.5rem;display:flex;flex-direction:column;gap:1rem;">
+          <div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-left:4px solid #3b82f6;border-radius:4px 12px 12px 4px;padding:.8rem 1rem">
+            <div style="font-size:.8rem;font-weight:700;color:#3b82f6">👮 Traffic Personnel</div>
+            <div style="font-size:1.3rem;font-weight:800;color:var(--text);margin-top:.2rem">6 – 9 Officers</div>
+          </div>
+          <div style="background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);border-left:4px solid #eab308;border-radius:4px 12px 12px 4px;padding:.8rem 1rem">
+            <div style="font-size:.8rem;font-weight:700;color:#eab308">🚧 Barricade Units</div>
+            <div style="font-size:1.3rem;font-weight:800;color:var(--text);margin-top:.2rem">20 – 25 Units</div>
+          </div>
+          <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-left:4px solid #10b981;border-radius:4px 12px 12px 4px;padding:.8rem 1rem">
+            <div style="font-size:.8rem;font-weight:700;color:#10b981">🚔 Patrol Interceptors</div>
+            <div style="font-size:1.3rem;font-weight:800;color:var(--text);margin-top:.2rem">2 Vehicles</div>
+          </div>
+          <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-left:4px solid #ef4444;border-radius:4px 12px 12px 4px;padding:.8rem 1rem">
+            <div style="font-size:.8rem;font-weight:700;color:#ef4444">🚑 Emergency Response</div>
+            <div style="font-size:.82rem;color:var(--muted);margin-top:.2rem">Ambulance · Tow Truck · Police Patrol</div>
+          </div>
+        </div>
+      </div>
+      <div class="feature-content">
+        <h3>Smart Resource Deployment Planner</h3>
+        <p>Instantly generates a complete deployment sheet — telling commanders exactly how many officers, barricades, and patrol vehicles to dispatch for any incident type.</p>
+        <ul class="feature-list">
+          <li><span class="check">✓</span> Risk-calibrated personnel counts (min/max range)</li>
+          <li><span class="check">✓</span> Road closure-aware barricade allocation</li>
+          <li><span class="check">✓</span> Cause-specific emergency squad assignments</li>
+          <li><span class="check">✓</span> One-click CSV deployment sheet export</li>
+          <li><span class="check">✓</span> Covers 9 incident cause categories end-to-end</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tab 3: Diversion Engine -->
+    <div class="feature-panel" id="panel-3">
+      <div class="feature-visual">
+        <div class="map-mock">
+          <!-- incident dot -->
+          <div class="map-dot" style="width:16px;height:16px;background:#ef4444;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+          <div class="map-dot" style="width:14px;height:14px;background:rgba(239,68,68,.3);top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+          <!-- diversion points -->
+          <div style="position:absolute;top:25%;left:25%;width:10px;height:10px;border-radius:50%;background:#3b82f6;box-shadow:0 0 8px #3b82f6"></div>
+          <div style="position:absolute;top:70%;left:30%;width:10px;height:10px;border-radius:50%;background:#3b82f6;box-shadow:0 0 8px #3b82f6"></div>
+          <div style="position:absolute;top:35%;left:72%;width:10px;height:10px;border-radius:50%;background:#3b82f6;box-shadow:0 0 8px #3b82f6"></div>
+          <!-- lines -->
+          <svg style="position:absolute;inset:0;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg">
+            <line x1="50%" y1="50%" x2="25%" y2="25%" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 4" opacity=".5"/>
+            <line x1="50%" y1="50%" x2="30%" y2="70%" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 4" opacity=".5"/>
+            <line x1="50%" y1="50%" x2="72%" y2="35%" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4 4" opacity=".5"/>
+          </svg>
+          <div style="position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);background:rgba(15,23,42,.85);border:1px solid var(--border);border-radius:8px;padding:.5rem 1rem;font-size:.75rem;white-space:nowrap;color:var(--text)">
+            🔴 Incident &nbsp;|&nbsp; 🔵 Diversion Nodes
+          </div>
+        </div>
+      </div>
+      <div class="feature-content">
+        <h3>Intelligent Diversion Routing Engine</h3>
+        <p>Generates turn-by-turn diversion strategies for blocked junctions using spatial nearest-neighbor routing and pre-coded plans for Bengaluru's top bottlenecks.</p>
+        <ul class="feature-list">
+          <li><span class="check">✓</span> Predefined expert plans for 7 major Bengaluru junctions</li>
+          <li><span class="check">✓</span> BallTree spatial routing for all other locations</li>
+          <li><span class="check">✓</span> Visual incident + diversion node map</li>
+          <li><span class="check">✓</span> Distance-ranked diversion checkpoint listing</li>
+          <li><span class="check">✓</span> Digital signage placement recommendations (500m advisory)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── HOW IT WORKS ─── -->
+<section id="how">
+  <div class="container">
+    <div class="how-header">
+      <div class="section-tag purple">Pipeline</div>
+      <h2 class="section-title">From Raw Data to Actionable Command</h2>
+      <p class="section-sub" style="margin:0 auto">Five automated stages convert raw incident logs into forecasts, resource plans, and diversion routes.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num" style="background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.3)">1</div>
+        <h4>Ingest & Clean</h4>
+        <p>Raw event CSV is loaded, datetime-parsed, coordinates validated for Bengaluru bounds, and duplicates removed.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)">2</div>
+        <h4>Feature Engineering</h4>
+        <p>Temporal features (hour, weekday), zone/junction frequencies, and Haversine spatial density within 500m radius added.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:rgba(139,92,246,.15);color:var(--purple);border:1px solid rgba(139,92,246,.3)">3</div>
+        <h4>Risk Scoring</h4>
+        <p>Weighted multi-factor score (0–100) computed using road closure, priority, cause, duration, and area density.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:rgba(249,115,22,.15);color:var(--orange);border:1px solid rgba(249,115,22,.3)">4</div>
+        <h4>ML Training</h4>
+        <p>Random Forest classifier predicts risk level. Random Forest regressor forecasts disruption duration in minutes.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)">5</div>
+        <h4>Recommend & Route</h4>
+        <p>Resource optimizer and diversion engine generate deployment sheets and routing strategies ready for field dispatch.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── METRICS ─── -->
+<section id="metrics">
+  <div class="container">
+    <div class="section-tag orange">Model Performance</div>
+    <h2 class="section-title">Trained on Real Bengaluru Traffic Data</h2>
+    <p class="section-sub">ML models trained and validated on the Astram anonymized event dataset covering thousands of real incidents.</p>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-val">93.4%</div>
+        <div class="metric-lbl">Risk Classifier Accuracy</div>
+        <div class="metric-delta">↑ Random Forest · 100 Estimators</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">80%</div>
+        <div class="metric-lbl">Critical Risk Recall</div>
+        <div class="metric-delta">F1 = 0.80 on Critical class</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">95.2%</div>
+        <div class="metric-lbl">Medium Risk F1 Score</div>
+        <div class="metric-delta">Largest class · 946 samples</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">8,174</div>
+        <div class="metric-lbl">Training Records</div>
+        <div class="metric-delta">80/20 Stratified Split</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── RISK DEMO ─── -->
+<section id="demo">
+  <div class="container">
+    <div class="section-tag blue">Interactive Demo</div>
+    <h2 class="section-title">See How Risk Is Calculated</h2>
+    <p class="section-sub">Click any risk level to see how weighted factors combine into a final congestion score.</p>
+
+    <div class="demo-grid">
+      <div class="risk-levels">
+        <div class="risk-row critical" onclick="showRiskDetail('critical')">
+          <div class="risk-indicator"></div>
+          <span class="risk-label">Critical — Score 75–100</span>
+          <div class="risk-bar-wrap"><div class="risk-fill" style="width:90%"></div></div>
+        </div>
+        <div class="risk-row high" onclick="showRiskDetail('high')">
+          <div class="risk-indicator"></div>
+          <span class="risk-label">High — Score 55–74</span>
+          <div class="risk-bar-wrap"><div class="risk-fill" style="width:65%"></div></div>
+        </div>
+        <div class="risk-row medium" onclick="showRiskDetail('medium')">
+          <div class="risk-indicator"></div>
+          <span class="risk-label">Medium — Score 35–54</span>
+          <div class="risk-bar-wrap"><div class="risk-fill" style="width:44%"></div></div>
+        </div>
+        <div class="risk-row low" onclick="showRiskDetail('low')">
+          <div class="risk-indicator"></div>
+          <span class="risk-label">Low — Score 0–34</span>
+          <div class="risk-bar-wrap"><div class="risk-fill" style="width:22%"></div></div>
+        </div>
+
+        <div style="margin-top:1.5rem;padding:1.2rem;background:var(--bg);border:1px solid var(--border);border-radius:12px;font-size:.85rem;color:var(--muted);line-height:1.6">
+          <strong style="color:var(--text)">Score Formula:</strong><br/>
+          Risk = 0.25 × Road Closure + 0.20 × Priority + 0.20 × Cause + 0.20 × Duration + 0.15 × Density
+        </div>
+      </div>
+
+      <div class="risk-detail" id="risk-detail-box">
+        <h4 id="rd-title">🔴 Critical Risk Event — Example</h4>
+        <div class="factor-row">
+          <span class="factor-name">Road Closure Required (25%)</span>
+          <span class="factor-score" style="color:#ef4444">25.0 pts</span>
+        </div>
+        <div class="factor-row">
+          <span class="factor-name">Priority: High (20%)</span>
+          <span class="factor-score" style="color:#f97316">20.0 pts</span>
+        </div>
+        <div class="factor-row">
+          <span class="factor-name">Cause: Accident (20%)</span>
+          <span class="factor-score" style="color:#eab308">20.0 pts</span>
+        </div>
+        <div class="factor-row">
+          <span class="factor-name">Duration: 5+ Hours (20%)</span>
+          <span class="factor-score" style="color:#3b82f6">20.0 pts</span>
+        </div>
+        <div class="factor-row">
+          <span class="factor-name">Area Density: High (15%)</span>
+          <span class="factor-score" style="color:#8b5cf6">12.0 pts</span>
+        </div>
+        <div class="factor-row" style="border-top:1px solid var(--blue);margin-top:.5rem;padding-top:.75rem">
+          <span style="font-weight:700;color:var(--text)">Total Risk Score</span>
+          <span id="rd-total" style="font-size:1.3rem;font-weight:800;color:#ef4444">97.0 / 100</span>
+        </div>
+        <div id="rd-recommend" style="margin-top:1.2rem;padding:.8rem 1rem;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:.85rem;color:var(--muted)">
+          <strong style="color:#ef4444">Recommended:</strong> 12–18 officers · 25–40 barricades · 3 patrol interceptors · Ambulance + Tow Truck
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA ─── -->
+<section id="cta">
+  <div class="cta-inner">
+    <div class="section-tag blue" style="margin:0 auto 1.5rem">Ready to Deploy?</div>
+    <h2>Give Your Traffic Command<br /><span class="grad-text">Predictive Power</span></h2>
+    <p>Run the Astram dashboard locally and start forecasting congestion risk for any event in Bengaluru.</p>
+    <a href="#" class="btn-glow" onclick="launchDashboard(event)">
+      🚦 Launch Astram Dashboard
+    </a>
+    <div style="margin-top:1.5rem;color:var(--muted);font-size:.85rem">
+      Run <code style="background:var(--bg2);padding:.2rem .6rem;border-radius:4px;color:var(--blue)">streamlit run app.py</code> in your project directory
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <p>Built for <span>Astram</span> · AI-Driven Event Traffic Intelligence · Bengaluru Smart City Initiative</p>
+  <p style="margin-top:.5rem;font-size:.78rem">Powered by Python · Scikit-learn · Streamlit · Plotly · Folium</p>
+</footer>
+
+<script>
+  // ─── NAV SCROLL ───
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  // ─── COUNTER ANIMATION ───
+  function animateCounter(el, target, suffix='', decimals=0) {
+    const duration = 2000;
+    const start = performance.now();
+    const update = (now) => {
+      const elapsed = Math.min(now - start, duration);
+      const progress = elapsed / duration;
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const val = target * ease;
+      el.textContent = decimals > 0 ? val.toFixed(decimals) + suffix : Math.round(val).toLocaleString() + suffix;
+      if (progress < 1) requestAnimationFrame(update);
+    };
+    requestAnimationFrame(update);
+  }
+
+  // ─── INTERSECTION OBSERVER ───
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+
+      // cards
+      if (el.classList.contains('problem-card') || el.classList.contains('metric-card') || el.classList.contains('step')) {
+        setTimeout(() => el.classList.add('visible'), (el.dataset.delay || 0) * 1000);
+      }
+
+      // counters
+      if (el.dataset.target !== undefined) {
+        const target = parseFloat(el.dataset.target);
+        const isDecimal = target % 1 !== 0;
+        animateCounter(el, target, isDecimal ? '%' : '', isDecimal ? 1 : 0);
+      }
+
+      observer.unobserve(el);
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.problem-card, .metric-card, .step, [data-target]').forEach((el, i) => {
+    el.dataset.delay = (i % 4) * 0.12;
+    observer.observe(el);
+  });
+
+  // ─── FEATURE TABS ───
+  function switchTab(idx) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+    document.querySelectorAll('.feature-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+  }
+
+  // ─── RISK DETAIL ───
+  const riskData = {
+    critical: {
+      title: '🔴 Critical Risk Event',
+      factors: [
+        ['Road Closure Required (25%)', '25.0', '#ef4444'],
+        ['Priority: High (20%)', '20.0', '#f97316'],
+        ['Cause: Accident (20%)', '20.0', '#eab308'],
+        ['Duration: 5+ Hours (20%)', '20.0', '#3b82f6'],
+        ['Area Density: Very High (15%)', '12.0', '#8b5cf6'],
+      ],
+      total: '97.0', totalColor: '#ef4444',
+      recommend: '12–18 officers · 25–40 barricades · 3 patrol interceptors · Ambulance + Tow Truck',
+      recColor: 'rgba(239,68,68,.1)', recBorder: 'rgba(239,68,68,.3)', recLabel: '#ef4444'
+    },
+    high: {
+      title: '🟠 High Risk Event',
+      factors: [
+        ['Road Closure Required (25%)', '25.0', '#ef4444'],
+        ['Priority: High (20%)', '20.0', '#f97316'],
+        ['Cause: Public Event (20%)', '17.0', '#eab308'],
+        ['Duration: 3 Hours (20%)', '12.5', '#3b82f6'],
+        ['Area Density: Medium (15%)', '6.0', '#8b5cf6'],
+      ],
+      total: '69.5', totalColor: '#f97316',
+      recommend: '8–12 officers · 20–25 barricades · 2 patrol interceptors · Event Security Liaison',
+      recColor: 'rgba(249,115,22,.1)', recBorder: 'rgba(249,115,22,.3)', recLabel: '#f97316'
+    },
+    medium: {
+      title: '🟡 Medium Risk Event',
+      factors: [
+        ['No Road Closure (25%)', '0.0', '#94a3b8'],
+        ['Priority: Medium (20%)', '12.0', '#eab308'],
+        ['Cause: Construction (20%)', '17.0', '#eab308'],
+        ['Duration: 90 mins (20%)', '6.25', '#3b82f6'],
+        ['Area Density: Low (15%)', '3.0', '#8b5cf6'],
+      ],
+      total: '45.3', totalColor: '#eab308',
+      recommend: '3–5 officers · 3–6 barricades · 1 patrol unit · Signage & Coning Team',
+      recColor: 'rgba(234,179,8,.1)', recBorder: 'rgba(234,179,8,.3)', recLabel: '#eab308'
+    },
+    low: {
+      title: '🟢 Low Risk Event',
+      factors: [
+        ['No Road Closure (25%)', '0.0', '#94a3b8'],
+        ['Priority: Low (20%)', '5.0', '#10b981'],
+        ['Cause: Breakdown (20%)', '13.0', '#10b981'],
+        ['Duration: 30 mins (20%)', '2.5', '#3b82f6'],
+        ['Area Density: Very Low (15%)', '1.5', '#8b5cf6'],
+      ],
+      total: '22.0', totalColor: '#10b981',
+      recommend: '1–2 officers · 0–2 barricades · 0 patrol units · Tow Truck only',
+      recColor: 'rgba(16,185,129,.1)', recBorder: 'rgba(16,185,129,.3)', recLabel: '#10b981'
+    }
+  };
+
+  function showRiskDetail(level) {
+    const d = riskData[level];
+    const box = document.getElementById('risk-detail-box');
+    box.style.animation = 'none';
+    box.offsetHeight; // reflow
+    box.style.animation = 'fade-in .3s ease';
+
+    document.getElementById('rd-title').textContent = d.title;
+    document.getElementById('rd-total').textContent = d.total + ' / 100';
+    document.getElementById('rd-total').style.color = d.totalColor;
+
+    const rec = document.getElementById('rd-recommend');
+    rec.innerHTML = `<strong style="color:${d.recLabel}">Recommended:</strong> ${d.recommend}`;
+    rec.style.background = d.recColor;
+    rec.style.borderColor = d.recBorder;
+
+    // rebuild factor rows
+    const rows = box.querySelectorAll('.factor-row');
+    d.factors.forEach((f, i) => {
+      if (rows[i]) {
+        rows[i].querySelector('.factor-name').textContent = f[0];
+        rows[i].querySelector('.factor-score').textContent = f[1] + ' pts';
+        rows[i].querySelector('.factor-score').style.color = f[2];
+      }
+    });
+  }
+
+  // ─── LAUNCH ───
+  function launchDashboard(e) {
+    e.preventDefault();
+    const tip = document.createElement('div');
+    tip.style.cssText = `
+      position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+      background:#0f172a;border:1px solid #3b82f6;border-radius:16px;
+      padding:2rem 2.5rem;text-align:center;z-index:9999;
+      box-shadow:0 0 60px rgba(59,130,246,.3);
+      font-family:'Outfit',sans-serif;color:#f8fafc;max-width:400px;width:90%;
+    `;
+    tip.innerHTML = `
+      <div style="font-size:2rem;margin-bottom:.75rem">🚦</div>
+      <h3 style="font-size:1.2rem;margin-bottom:.5rem">Launch Astram Dashboard</h3>
+      <p style="color:#94a3b8;font-size:.9rem;margin-bottom:1.2rem">Run this command in your project terminal:</p>
+      <code style="display:block;background:#020817;padding:.75rem 1rem;border-radius:8px;color:#3b82f6;font-size:.95rem;border:1px solid #334155">streamlit run app.py</code>
+      <button onclick="this.parentElement.remove()" style="margin-top:1.2rem;background:#3b82f6;color:#fff;border:none;padding:.5rem 1.5rem;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:600">Got it!</button>
+    `;
+    document.body.appendChild(tip);
+  }
+</script>
+</body>
+</html>
