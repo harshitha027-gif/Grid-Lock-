@@ -15,9 +15,13 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from src.preprocessing import preprocess_data
 from src.feature_engineering import engineer_features
-from src.risk_engine import predict_event, calculate_risk_score
+from src.risk_engine import predict_event, calculate_risk_score, compute_factor_breakdown
 from src.resource_recommender import recommend_resources
 from src.diversion_engine import DiversionEngine
+from src.config import (
+    RISK_WEIGHTS, BENGALURU_LAT_RANGE, BENGALURU_LON_RANGE,
+    DENSITY_RADIUS_KM, EARTH_RADIUS_KM,
+)
 
 # Set Page Config
 st.set_page_config(
@@ -120,12 +124,12 @@ def load_data():
         coords_df = pd.read_csv(coords_path)
         return df, coords_df, False
     elif os.path.exists(raw_path):
-        # Fallback processing if pipeline hasn't been run
-        st.warning("⚠️ Processed dataset not found. Running lightweight on-the-fly preprocessing...")
-        df = preprocess_data(raw_path)
-        df = engineer_features(df, is_training=True)
-        df['risk_score'], df['risk_level'] = calculate_risk_score(df)
-        coords_df = df[['latitude', 'longitude', 'junction', 'zone']].drop_duplicates()
+        # Fallback processing if pipeline hasn't been run (Fix 4.1: add spinner)
+        with st.spinner("⏳ Processed dataset not found. Running on-the-fly preprocessing — this may take 30-60 seconds..."):
+            df = preprocess_data(raw_path)
+            df = engineer_features(df, is_training=True)
+            df['risk_score'], df['risk_level'] = calculate_risk_score(df)
+            coords_df = df[['latitude', 'longitude', 'junction', 'zone']].drop_duplicates()
         return df, coords_df, True
     else:
         st.error("❌ Dataset not found! Please ensure 'Astram event data_anonymized - Astram event data_anonymizedb40ac87.csv' is in the workspace.")
@@ -140,12 +144,16 @@ def get_diversion_engine(coords_data):
         return DiversionEngine(coords_data)
     return None
 
-diversion_engine = get_diversion_engine(df_all)
+# Fix 4.2: use deduplicated coords_df, not full df_all (avoids duplicate BallTree entries)
+diversion_engine = get_diversion_engine(coords_df)
 
 # Sidebar Control Center
 st.sidebar.markdown("<h2 style='text-align: center; color: #3b82f6;'>🚦 ASTRAM</h2>", unsafe_allow_html=True)
 st.sidebar.markdown("<p style='text-align: center; color: #94a3b8; font-size: 0.9rem;'>AI-Driven Event Traffic Intelligence</p>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
+
+# Fix 4.4: initialize filtered_df before the conditional to prevent NameError
+filtered_df = pd.DataFrame()
 
 if df_all is not None:
     # Sidebar Filters
@@ -294,7 +302,12 @@ else:
         with map_col2:
             st.subheader("🔥 Congestion Heatmap")
             # Folium Heatmap
-            map_center = [filtered_df['latitude'].median(), filtered_df['longitude'].median()]
+            lat_med = filtered_df['latitude'].median()
+            lon_med = filtered_df['longitude'].median()
+            if pd.isna(lat_med) or pd.isna(lon_med):
+                map_center = [12.9716, 77.5946] # Fallback Bengaluru center
+            else:
+                map_center = [lat_med, lon_med]
             folium_map = folium.Map(location=map_center, zoom_start=11, tiles="CartoDB dark_matter")
             
             # Extract heat data
@@ -482,9 +495,19 @@ else:
             submit_btn = st.form_submit_button("🔮 Predict Congestion & Forecast Impact")
             
         if submit_btn:
+            # Fix 4.3: validate coordinates are within Bengaluru bounds
+            lat_min, lat_max = BENGALURU_LAT_RANGE
+            lon_min, lon_max = BENGALURU_LON_RANGE
+            if not (lat_min <= sim_lat <= lat_max and lon_min <= sim_lon <= lon_max):
+                st.warning(
+                    f"⚠️ Coordinates ({sim_lat:.4f}, {sim_lon:.4f}) are outside the "
+                    f"Bengaluru region ({lat_min}-{lat_max}°N, {lon_min}-{lon_max}°E). "
+                    f"Density and diversion results may be inaccurate."
+                )
+
             # Combine datetime
             sim_datetime = pd.to_datetime(f"{sim_start_date} {sim_start_time}")
-            
+
             # Pack input dictionary
             event_input = {
                 'event_type': sim_type,
@@ -495,73 +518,56 @@ else:
                 'latitude': sim_lat,
                 'longitude': sim_lon,
                 'zone': sim_zone if sim_zone else "Unknown",
-                'junction': sim_junction if sim_junction else "Unknown"
+                'junction': sim_junction if sim_junction else "Unknown",
             }
-            
+
             # Run Prediction
             try:
-                if not is_fallback and os.path.exists("models/risk_classifier.joblib"):
-                    # ML Mode
+                if not is_fallback and os.path.exists("models/duration_regressor.joblib"):
+                    # ML Mode (uses duration regressor + formula scoring)
                     prediction = predict_event("models", event_input, df_all)
                 else:
-                    # Heuristic Fallback Mode
-                    # Calculate density locally
-                    r_rad = 0.5 / 6371.0
+                    # Heuristic Fallback Mode (Fix 2.1: uses shared functions, no duplication)
+                    r_rad = DENSITY_RADIUS_KM / EARTH_RADIUS_KM
                     ref_coords = np.radians(df_all[['latitude', 'longitude']].values)
                     query_coords = np.radians([[sim_lat, sim_lon]])
                     tree = BallTree(ref_coords, metric='haversine')
-                    density = tree.query_radius(query_coords, r=r_rad, count_only=True)[0]
-                    
-                    # Impute duration from historical median
-                    matching_events = df_all[(df_all['event_cause'] == sim_cause) & (df_all['priority'] == sim_priority)]
-                    if not matching_events.empty:
-                        duration_est = matching_events['duration_minutes'].median()
-                    else:
-                        duration_est = df_all[df_all['event_cause'] == sim_cause]['duration_minutes'].median()
+                    density = int(tree.query_radius(query_coords, r=r_rad, count_only=True)[0])
+
+                    # Estimate duration from historical median
+                    matching = df_all[(df_all['event_cause'] == sim_cause) & (df_all['priority'] == sim_priority)]
+                    duration_est = matching['duration_minutes'].median() if not matching.empty else \
+                                   df_all[df_all['event_cause'] == sim_cause]['duration_minutes'].median()
                     if pd.isna(duration_est):
                         duration_est = 60.0
-                        
-                    event_input_feat = event_input.copy()
-                    event_input_feat['duration_minutes'] = duration_est
-                    event_input_feat['historical_event_density'] = density
-                    
-                    # Calculate risk scores using formula
-                    scores, levels = calculate_risk_score(pd.DataFrame([event_input_feat]))
-                    
-                    # Calculate breakdown
-                    road_closure_score = 100.0 if sim_road_closure else 0.0
-                    priority_map = {'High': 100.0, 'Medium': 60.0, 'Low': 25.0}
-                    priority_score = priority_map.get(sim_priority, 60.0)
-                    
-                    cause = sim_cause.lower().strip()
-                    if cause in ['accident', 'water_logging', 'congestion']:
-                        cause_score = 100.0
-                    elif cause in ['public_event', 'construction', 'tree_fall']:
-                        cause_score = 85.0
-                    elif cause in ['vehicle_breakdown']:
-                        cause_score = 65.0
-                    elif cause in ['pot_holes', 'road_conditions']:
-                        cause_score = 45.0
-                    else:
-                        cause_score = 25.0
-                    if sim_type == 'unplanned':
-                        cause_score = min(100.0, cause_score + 5.0)
-                        
-                    duration_score = min(100.0, (duration_est / 240.0) * 100.0)
+
                     p95_density = df_all['historical_event_density'].quantile(0.95)
-                    density_score = min(100.0, (density / p95_density) * 100.0)
-                    
+
+                    # Use shared compute_factor_breakdown (Fix 2.1: single source of truth)
+                    breakdown = compute_factor_breakdown(
+                        requires_road_closure=sim_road_closure,
+                        priority=sim_priority,
+                        event_cause=sim_cause,
+                        event_type=sim_type,
+                        duration_minutes=duration_est,
+                        historical_event_density=density,
+                        p95_density=p95_density,
+                    )
+
+                    w = RISK_WEIGHTS
+                    risk_score = (
+                        w['road_closure'] * breakdown['road_closure_score'] +
+                        w['priority']     * breakdown['priority_score'] +
+                        w['cause']        * breakdown['cause_score'] +
+                        w['duration']     * breakdown['duration_score'] +
+                        w['density']      * breakdown['density_score']
+                    )
+                    from src.risk_engine import _score_to_level
                     prediction = {
-                        'risk_score': round(scores[0], 1),
-                        'risk_level': levels[0],
-                        'predicted_duration_minutes': round(duration_est, 1),
-                        'factor_breakdown': {
-                            'road_closure_score': road_closure_score,
-                            'priority_score': priority_score,
-                            'cause_score': cause_score,
-                            'duration_score': duration_score,
-                            'density_score': density_score
-                        }
+                        'risk_score': round(float(risk_score), 1),
+                        'risk_level': _score_to_level(risk_score),
+                        'predicted_duration_minutes': round(float(duration_est), 1),
+                        'factor_breakdown': breakdown,
                     }
                     
                 # Save simulation to Session State to share across tabs
