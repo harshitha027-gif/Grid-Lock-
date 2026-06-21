@@ -11,12 +11,10 @@ env/
 .env/
 
 # ===== Trained ML Models (large binary files) =====
-models/*.joblib
+# (Removed joblib ignore rules so models can be pushed for Streamlit Cloud deployment)
 
 # ===== Raw & Processed Datasets =====
-# Raw CSV (~4.5 MB) — too large and contains sensitive event data
-*.csv
-data/processed/
+# (Removed CSV ignore rules so the dataset can be pushed to GitHub for Streamlit Cloud deployment)
 
 # ===== IDE & Editor Configs =====
 .vscode/
