@@ -1,0 +1,47 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# ===== Virtual Environments =====
+venv/
+env/
+.venv/
+.env/
+
+# ===== Trained ML Models (large binary files) =====
+models/*.joblib
+
+# ===== Raw & Processed Datasets =====
+# Raw CSV (~4.5 MB) — too large and contains sensitive event data
+*.csv
+data/processed/
+
+# ===== IDE & Editor Configs =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== OS Generated Files =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Streamlit Cache =====
+.streamlit/
+
+# ===== Jupyter / IPython =====
+.ipynb_checkpoints/
+*.ipynb
+
+# ===== Distribution & Build =====
+dist/
+build/
+*.egg-info/
+*.egg
+
+# ===== Logs =====
+*.log
