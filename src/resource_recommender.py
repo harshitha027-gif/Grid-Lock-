@@ -106,26 +106,25 @@ def recommend_resources(risk_level: str, event_cause: str, requires_road_closure
 def recommend_resources_df(df: pd.DataFrame) -> pd.DataFrame:
     """
     Apply resource recommendations across an entire DataFrame.
+    Fix 5.2: uses df.apply() instead of iterrows() for better performance.
     """
     logger.info("Generating resource recommendations for dataset...")
     df = df.copy()
-    
-    rec_list = []
-    for idx, row in df.iterrows():
+
+    def _apply_row(row):
         rec = recommend_resources(
             risk_level=row['risk_level'],
             event_cause=row['event_cause'],
-            requires_road_closure=row['requires_road_closure']
+            requires_road_closure=row['requires_road_closure'],
         )
-        rec_list.append(rec)
-        
-    rec_df = pd.DataFrame(rec_list, index=df.index)
-    
-    # Join with original dataframe
-    # Convert list of emergency responses to a comma-separated string for CSV formatting
-    rec_df['emergency_response'] = rec_df['emergency_response'].apply(lambda x: "; ".join(x))
-    
+        # Flatten emergency_response list to string for CSV compatibility
+        rec['emergency_response'] = "; ".join(rec['emergency_response'])
+        return pd.Series(rec)
+
+    rec_df = df.apply(_apply_row, axis=1)
+
     for col in rec_df.columns:
         df[col] = rec_df[col]
-        
+
     return df
+
