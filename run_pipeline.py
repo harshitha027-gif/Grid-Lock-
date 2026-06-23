@@ -4,7 +4,7 @@ Orchestrates: preprocessing → risk scoring → model training → resource
 recommendation → CSV export.
 
 Fixes applied:
-- Issue 5.1: Replaced hardcoded absolute paths with pathlib-based relative paths.
+- Issue 5.1: Replace hardcoded absolute paths with pathlib-based relative path.
 - Issue 5.4: Saves model_metadata.json with training date, row count, sklearn version.
 - Issue 1.3: Risk scores computed on fully-featured data; train/test split now
              happens inside train_models() BEFORE feature engineering.
@@ -69,7 +69,7 @@ def main():
         sys.exit(1)
 
     # ── 4. Compute risk scores on the full featured dataset ──────────────────
-    logger.info("Computing risk scores and levels...")
+    logger.info("computing risk scores and levels...")
     try:
         featured_df['risk_score'], featured_df['risk_level'] = calculate_risk_score(featured_df)
         logger.info(f"Risk levels distribution:\n{featured_df['risk_level'].value_counts()}")
@@ -114,4 +114,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main() 
